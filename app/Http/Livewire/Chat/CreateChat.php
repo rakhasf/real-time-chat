@@ -8,6 +8,37 @@ use Livewire\Component;
 class CreateChat extends Component
 {
     public $users;
+
+    public $message = "Hello";
+
+    public function checkConversation($receiverId)
+    {
+        dd($receiverId);
+
+        $checkedConversation = Conversation::where('receiver_id', auth()->user()->id)->where('sender_id',$receiverId)
+        ->orWhere('receiver_id', $receiverId)->where('sender_id', auth()->user()->id);
+
+        if (count($checkedConversation) == 0) {
+            $createConversation = Conversation::create([
+                'receiver_id' => $receiverId,
+                'sender_id' => auth()->user()->id,
+                'last_time_message' => 0
+            ]);
+            
+            $createMessage = Message::create([
+                'conversation_id' => $createConversation->id,
+                'sender_id' => auth()->user()->id,
+                'receiver_id' => $receiverId,
+                'body' => $this->message
+            ]);
+
+            $createConversation->last_time_message = $createMessage->created_at;
+            $createConversation->save();
+            dd($createMessage);
+        } else if (count($createConversation) >= 1) {
+            dd('conversation exists');
+        }
+    }
     public function render()
     {
         $this->users = User::where('id','!=', auth()->user()->id)->get();
