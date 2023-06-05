@@ -1,37 +1,41 @@
 <div>
-    {{-- If your happiness depends on money, you will never be happy with yourself. --}}
-    <div class="chatlist-header">
-        <div> Chat </div>
+    {{-- The Master doesn't talk, he acts. --}}
+    <div class="chatlist_header">
+        <div class="title">
+            Chat
+        </div>
 
-        <div class="img-container">
+        <div class="img_container">
             <img src="https://picsum.photos/id/237/200/300" alt="">
         </div>
 
     </div>
+    <div class="chatlist_body">
 
-    <div class="chatlist-body">
+        <div class="chatlist_item">
+            <div class="chatlist_img_container">
+                <img src="https://picsum.photos/id/227/200/300" alt="">
+            </div>
 
-        <div class="chatlist-item">
-            <div class="chatlist_container">
-                <img src="https://picsum.photos/id/237/200/300" alt="">
-            </div>
-            
-        <div class="chatlist-info">
-            <div class="top-row">
-                <div class="list-username">zeer</div>
-                <div class="date">2d</div>
-            </div>
-            <div class="bottom-row">
-                <div class="message-body text-trumcate">
-                    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Temporibus consequuntur autem, inventore voluptatem minima qui ducimus repellat nostrum libero hic, dicta cupiditate dolore illo vitae, a magnam quia ratione dolorum!
+            <div class="chatlist_info">
+                <div class="top_row">
+                    <div class="list_username">Zirjy</div>
+                    <span class="date">2d</span>
                 </div>
+                <div class="bottom_row">
+                    <div class="message_body text-truncate">
+                        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptate, eaque consequatur.
+                        Aspernatur deleniti soluta laboriosam natus nulla. Facere libero impedit, cupiditate vitae fuga
+                        possimus. Quibusdam ea commodi a doloribus earum.
+                    </div>
 
-                <div class="unread-count">
-                    111
+                    <div class="unread_count">
+                        100
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        </div>
     </div>
 </div>

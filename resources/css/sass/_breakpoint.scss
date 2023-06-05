@@ -1,625 +1,366 @@
-//     _            _           _                           _ _
-//    (_)          | |         | |                         | (_)
-//     _ _ __   ___| |_   _  __| | ___   _ __ ___   ___  __| |_  __ _
-//    | | '_ \ / __| | | | |/ _` |/ _ \ | '_ ` _ \ / _ \/ _` | |/ _` |
-//    | | | | | (__| | |_| | (_| |  __/ | | | | | |  __/ (_| | | (_| |
-//    |_|_| |_|\___|_|\__,_|\__,_|\___| |_| |_| |_|\___|\__,_|_|\__,_|
-//
-//      Simple, elegant and maintainable media queries in Sass
-//                        v2.0.0
-//
-//        https://eduardoboucas.github.io/include-media
-//
-//         Authors: Eduardo Boucas (@eduardoboucas)
-//                  Kitty Giraudel (@kittygiraudel)
-//
-//      This project is licensed under the terms of the MIT license
-@charset "UTF-8";
+//imports
+@import "breakpoints";
 
-////
-/// include-media library public configuration
-/// @author Eduardo Boucas
-/// @access public
-////
-@use 'sass:math';
-@use 'sass:map';
-@use 'sass:list';
-@use 'sass:string';
-@use 'sass:meta';
 
-///
-/// Creates a list of global breakpoints
-///
-/// @example scss - Creates a single breakpoint with the label `phone`
-///  $breakpoints: ('phone': 320px);
-///
-$breakpoints: ('phone': 320px,
-    'tablet': 768px,
-    'desktop': 1024px,
-) !default;
+//variables
+$header_height: 60px;
+$footer_height: 60px;
+$base_color: #0484f3;
 
-///
-/// Creates a list of static expressions or media types
-///
-/// @example scss - Creates a single media type (screen)
-///  $media-expressions: ('screen': 'screen');
-///
-/// @example scss - Creates a static expression with logical disjunction (OR operator)
-///  $media-expressions: (
-///    'retina2x': '(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)'
-///  );
-///
-$media-expressions: ('screen': 'screen',
-    'print': 'print',
-    'handheld': 'handheld',
-    'landscape': '(orientation: landscape)',
-    'portrait': '(orientation: portrait)',
-    'retina2x': '(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi), (min-resolution: 2dppx)',
-    'retina3x': '(-webkit-min-device-pixel-ratio: 3), (min-resolution: 350dpi), (min-resolution: 3dppx)',
-) !default;
+.msg_body_me {
+    background-color: rgb(238, 238, 238);
+    margin-left: auto;
+    color: black;
+    border-bottom-right-radius: 0 !important;
 
-///
-/// Defines a number to be added or subtracted from each unit when declaring breakpoints with exclusive intervals
-///
-/// @example scss - Interval for pixels is defined as `1` by default
-///  @include media('>128px') {}
-///
-///  /* Generates: */
-///  @media (min-width: 129px) {}
-///
-/// @example scss - Interval for ems is defined as `0.01` by default
-///  @include media('>20em') {}
-///
-///  /* Generates: */
-///  @media (min-width: 20.01em) {}
-///
-/// @example scss - Interval for rems is defined as `0.1` by default, to be used with `font-size: 62.5%;`
-///  @include media('>2.0rem') {}
-///
-///  /* Generates: */
-///  @media (min-width: 2.1rem) {}
-///
-$unit-intervals: ('px': 1,
-    'em': 0.01,
-    'rem': 0.1,
-    '': 0,
-) !default;
-
-///
-/// Defines whether support for media queries is available, useful for creating separate stylesheets
-/// for browsers that don't support media queries.
-///
-/// @example scss - Disables support for media queries
-///  $im-media-support: false;
-///  @include media('>=tablet') {
-///    .foo {
-///      color: tomato;
-///    }
-///  }
-///
-///  /* Generates: */
-///  .foo {
-///    color: tomato;
-///  }
-///
-$im-media-support: true !default;
-
-///
-/// Selects which breakpoint to emulate when support for media queries is disabled. Media queries that start at or
-/// intercept the breakpoint will be displayed, any others will be ignored.
-///
-/// @example scss - This media query will show because it intercepts the static breakpoint
-///  $im-media-support: false;
-///  $im-no-media-breakpoint: 'desktop';
-///  @include media('>=tablet') {
-///    .foo {
-///      color: tomato;
-///    }
-///  }
-///
-///  /* Generates: */
-///  .foo {
-///    color: tomato;
-///  }
-///
-/// @example scss - This media query will NOT show because it does not intercept the desktop breakpoint
-///  $im-media-support: false;
-///  $im-no-media-breakpoint: 'tablet';
-///  @include media('>=desktop') {
-///    .foo {
-///      color: tomato;
-///    }
-///  }
-///
-///  /* No output */
-///
-$im-no-media-breakpoint: 'desktop' !default;
-
-///
-/// Selects which media expressions are allowed in an expression for it to be used when media queries
-/// are not supported.
-///
-/// @example scss - This media query will show because it intercepts the static breakpoint and contains only accepted media expressions
-///  $im-media-support: false;
-///  $im-no-media-breakpoint: 'desktop';
-///  $im-no-media-expressions: ('screen');
-///  @include media('>=tablet', 'screen') {
-///    .foo {
-///      color: tomato;
-///    }
-///  }
-///
-///   /* Generates: */
-///   .foo {
-///     color: tomato;
-///   }
-///
-/// @example scss - This media query will NOT show because it intercepts the static breakpoint but contains a media expression that is not accepted
-///  $im-media-support: false;
-///  $im-no-media-breakpoint: 'desktop';
-///  $im-no-media-expressions: ('screen');
-///  @include media('>=tablet', 'retina2x') {
-///    .foo {
-///      color: tomato;
-///    }
-///  }
-///
-///  /* No output */
-///
-$im-no-media-expressions: ('screen', 'portrait', 'landscape') !default;
-
-////
-/// Cross-engine logging engine
-/// @author Kitty Giraudel
-/// @access private
-////
-
-///
-/// Log a message either with `@error` if supported
-/// else with `@warn`, using `feature-exists('at-error')`
-/// to detect support.
-///
-/// @param {String} $message - Message to log
-///
-@function im-log($message) {
-    @if meta.feature-exists('at-error') {
-        @error $message;
+    .read {
+        // font-size: 16px;
+        color: rgb(27, 27, 27);
     }
-
-    @else {
-        @warn $message;
-        $_: noop();
-    }
-
-    @return $message;
 }
 
-///
-/// Wrapper mixin for the log function so it can be used with a more friendly
-/// API than `@if im-log('..') {}` or `$_: im-log('..')`. Basically, use the function
-/// within functions because it is not possible to include a mixin in a function
-/// and use the mixin everywhere else because it's much more elegant.
-///
-/// @param {String} $message - Message to log
-///
-@mixin log($message) {
-    @if im-log($message) {}
+.msg_body_receiver {
+    background-color: lighten($color: $base_color, $amount: 4.5%);
+    color: rgb(255, 255, 255);
+
+    border-bottom-left-radius: 0 !important;
+
+    .read {
+        // font-size: 16px;
+        color: rgb(204, 204, 204);
+    }
 }
 
-///
-/// Function with no `@return` called next to `@warn` in Sass 3.3
-/// to trigger a compiling error and stop the process.
-///
-@function noop() {}
+//chat container
+/*---------------------------*/
 
-///
-/// Determines whether a list of conditions is intercepted by the static breakpoint.
-///
-/// @param {Arglist}   $conditions  - Media query conditions
-///
-/// @return {Boolean} - Returns true if the conditions are intercepted by the static breakpoint
-///
-@function im-intercepts-static-breakpoint($conditions...) {
-    $no-media-breakpoint-value: map.get($breakpoints, $im-no-media-breakpoint);
+img {
+    object-fit: cover;
+}
 
-    @if not $no-media-breakpoint-value {
-        @if im-log('`#{$im-no-media-breakpoint}` is not a valid breakpoint.') {}
+body {
+    background-color: rgba(240, 240, 240, 0.116) !important;
+}
+
+.chat_container {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border: 1px solid rgb(243, 242, 242);
+    border-radius: 0;
+    margin-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 5px 6px;
+
+    z-index: 10;
+    background-color: #fff;
+
+    @include media(">tablet") {
+        top: unset;
+        height: 90%;
     }
 
-    @each $condition in $conditions {
-        @if not map.has-key($media-expressions, $condition) {
-            $operator: get-expression-operator($condition);
-            $prefix: get-expression-prefix($operator);
-            $value: get-expression-value($condition, $operator);
+    @include media(">desktop") {
+        position: fixed;
+        width: 95%;
+        left: 2.5%;
+        height: 85%;
+        border: 1px solid rgb(202, 202, 202);
+        border-radius: 9px;
+        margin-top: 15px;
+    }
 
-            @if ($prefix=='max'and $value <=$no-media-breakpoint-value) or ($prefix=='min'and $value > $no-media-breakpoint-value) {
-                @return false;
+    // @media  only screen  and ( min-width:1024px){
+    //   border: 3px solid red;
+    // }
+}
+
+//chatlist
+/*---------------------------*/
+.chat_list_container {
+    border-right: 0;
+
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+
+    @include media(">tablet") {
+        width: 310px;
+        border-right: 1px solid rgb(226, 226, 226);
+    }
+
+    //header
+    .chatlist_header {
+        border-bottom: 1px solid rgb(196, 194, 194);
+        height: 60px;
+        display: flex;
+        flex-wrap: nowrap;
+
+        .title {
+            font-size: 22px;
+            display: flex;
+            padding: 5px 6px;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .img_container {
+            height: 39px;
+            width: 39px;
+            margin: auto;
+            margin-left: auto;
+            margin-right: 5px;
+
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                border: 1px solid rgba(55, 101, 202, 0.726);
+            }
+        }
+    }
+
+    .chatlist_body {
+        .chatlist_item {
+            padding: 2px 8px;
+            display: flex;
+            flex-wrap: nowrap;
+            width: 96%;
+
+            margin: 9px 4px;
+            border-radius: 14px;
+            background-color: rgb(241, 241, 241);
+            cursor: pointer;
+
+            &:hover {
+                background-color: darken($color: rgb(231, 231, 231), $amount: 4%);
+            }
+
+            .chatlist_img_container {
+                height: 47px;
+                width: 47px;
+                margin: auto;
+                margin-left: auto;
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                }
+            }
+
+            .chatlist_info {
+                padding: 2px 5px;
+                width: 80%;
+                display: block;
+                //flex-wrap: nowrap;
+
+                .top_row {
+                    margin: 3px 0px;
+                    width: 100%;
+                    display: flex;
+
+                    .list_username {
+                        font-size: 16px;
+                        width: 80%;
+                    }
+
+                    .date {
+                        font-size: 13px;
+                        margin-left: auto;
+                        margin-right: 3px;
+                    }
+                }
+
+                .bottom_row {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    width: 100%;
+
+                    .message_body {
+                        width: 80%;
+                        font-weight: lighter;
+                        font-family: "Roboto";
+                    }
+
+                    .unread_count {
+                        margin-left: auto;
+                        font-size: 13px;
+                        // background-color: gainsboro;
+                        padding: 2px 7px;
+                        margin-top: 6px;
+                        border-radius: 50%;
+                        color: rgb(255, 0, 0);
+                        font-weight: lighter;
+                    }
+                }
+            }
+        }
+    }
+}
+
+//chatbox
+/*---------------------------*/
+.chat_box_container {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    @include media(">tablet") {
+        width: calc(100% - 310px);
+    }
+
+    .chatbox_header {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        border-bottom: 1px solid rgba(219, 219, 219, 0.952);
+        height: 60px;
+
+        display: flex;
+        flex-wrap: nowrap;
+
+        .img_container {
+            height: 41px;
+            width: 41px;
+            margin: auto 0;
+            margin-left: 4px;
+
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                border: 1px solid lighten($color: $base_color, $amount: 48%);
             }
         }
 
-        @else if not list.index($im-no-media-expressions, $condition) {
-            @return false;
+        .return {
+            margin: auto 0;
+            font-size: 21px;
+            padding: 7px 11px;
+            cursor: pointer;
+            color: rgb(128, 128, 128);
+        }
+
+        .name {
+            margin: auto 5px;
+            cursor: pointer;
+            color: rgb(61, 61, 61);
+            font-weight: lighter;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: nowrap;
+
+            margin: auto 0 auto auto;
+            color: #0182f4;
+            font-size: 19px;
+
+            .info_item {
+                margin: 1px 11px;
+                padding: 3px 5px;
+                padding: 4px 7px;
+                cursor: pointer;
+
+                &:hover {
+                    color: lighten($color: $base_color, $amount: 18%);
+                }
+            }
         }
     }
 
-    @return true;
-}
+    .chatbox_body {
+        overflow: hidden;
+        overflow-y: scroll;
+        width: 100%;
+        position: absolute;
+        top: 60px;
+        height: 77%;
+        bottom: $footer_height + 3px;
+        //  overflow-y: auto;
+        padding: 17px 26px;
 
-////
-/// Parsing engine
-/// @author Kitty Giraudel
-/// @access private
-////
+        .msg_body {
+            border-radius: 15px;
+            display: block;
+            max-width: 80%;
+            margin-top: 11px;
+            font-size: 16.6px;
+            padding: 4px 12px;
+            font-weight: normal;
 
-///
-/// Get operator of an expression
-///
-/// @param {String} $expression - Expression to extract operator from
-///
-/// @return {String} - Any of `>=`, `>`, `<=`, `<`, `≥`, `≤`
-///
-@function get-expression-operator($expression) {
-    @each $operator in ('>=', '>', '<=', '<', '≥', '≤') {
-        @if string.index($expression, $operator) {
-            @return $operator;
+            .msg_body_footer {
+                width: 100%;
+                display: flex;
+                justify-content: end;
+                align-items: right;
+                font-weight: normal;
+                font-family: "Roboto";
+
+                .date {
+                    font-size: 13px;
+                    padding-right: 7px;
+                }
+
+                .read {
+                    // font-size: 16px;
+                    // color: rgb(102, 102, 102);
+
+                    i {
+                        font-size: 21px;
+                        margin: 2px;
+                    }
+                }
+            }
         }
     }
 
-    // It is not possible to include a mixin inside a function, so we have to
-    // rely on the `im-log(..)` function rather than the `log(..)` mixin. Because
-    // functions cannot be called anywhere in Sass, we need to hack the call in
-    // a dummy variable, such as `$_`. If anybody ever raise a scoping issue with
-    // Sass 3.3, change this line in `@if im-log(..) {}` instead.
-    $_: im-log('No operator found in `#{$expression}`.');
-}
+    .chatbox_footer {
+        height: 60px;
+        width: 100%;
+        border-top: 1px solid rgb(233, 233, 233);
+        position: absolute;
+        bottom: 0;
+        display: flex;
+        flex-wrap: nowrap;
+        background-color: white;
 
-///
-/// Get dimension of an expression, based on a found operator
-///
-/// @param {String} $expression - Expression to extract dimension from
-/// @param {String} $operator - Operator from `$expression`
-///
-/// @return {String} - `width` or `height` (or potentially anything else)
-///
-@function get-expression-dimension($expression, $operator) {
-    $operator-index: string.index($expression, $operator);
-    $parsed-dimension: string.slice($expression, 0, $operator-index - 1);
-    $parsed-dimension: str-trim($parsed-dimension);
-    $dimension: 'width';
+        .custom_form_group {
+            margin: auto 0;
 
-    @if string.length($parsed-dimension)>0 {
-        $dimension: $parsed-dimension;
-    }
+            display: flex;
+            flex-wrap: nowrap;
+            width: 100%;
+            padding: 2px 6px;
 
-    @return $dimension;
-}
+            .control {
+                margin: auto 0;
+                width: 90%;
+                border: 0;
+                outline: none;
+                box-shadow: 0;
+                background-color: rgba(226, 226, 226, 0.87);
+                border-radius: 11px;
 
-///
-/// Get dimension prefix based on an operator
-///
-/// @param {String} $operator - Operator
-///
-/// @return {String} - `min` or `max`
-///
-@function get-expression-prefix($operator) {
-    @return if(list.index(('<', '<=', '≤'), $operator), 'max', 'min');
-}
+                &:focus {
+                    box-shadow: none;
+                    outline: none;
+                    border-style: 0;
+                }
+            }
 
-///
-/// Get value of an expression, based on a found operator
-///
-/// @param {String} $expression - Expression to extract value from
-/// @param {String} $operator - Operator from `$expression`
-///
-/// @return {Number} - A numeric value
-///
-@function get-expression-value($expression, $operator) {
-    $operator-index: string.index($expression, $operator);
-    $value: string.slice($expression, $operator-index + string.length($operator));
-    $trimmedValue: str-trim($value);
-
-    @if map.has-key($breakpoints, $trimmedValue) {
-        $value: map.get($breakpoints, $trimmedValue);
-    }
-
-    @else {
-        $value: to-number($trimmedValue);
-    }
-
-    $interval: map.get($unit-intervals, math.unit($value));
-
-    @if not $interval {
-        // It is not possible to include a mixin inside a function, so we have to
-        // rely on the `im-log(..)` function rather than the `log(..)` mixin. Because
-        // functions cannot be called anywhere in Sass, we need to hack the call in
-        // a dummy variable, such as `$_`. If anybody ever raise a scoping issue with
-        // Sass 3.3, change this line in `@if im-log(..) {}` instead.
-        $_: im-log('Unknown unit `#{math.unit($value)}`.');
-    }
-
-    @if $operator=='>' {
-        $value: $value + $interval;
-    }
-
-    @else if $operator=='<' {
-        $value: $value - $interval;
-    }
-
-    @return $value;
-}
-
-///
-/// Parse an expression to return a valid media-query expression
-///
-/// @param {String} $expression - Expression to parse
-///
-/// @return {String} - Valid media query
-///
-@function parse-expression($expression) {
-
-    // If it is part of $media-expressions, it has no operator
-    // then there is no need to go any further, just return the value
-    @if map.has-key($media-expressions, $expression) {
-        @return map.get($media-expressions, $expression);
-    }
-
-    $operator: get-expression-operator($expression);
-    $dimension: get-expression-dimension($expression, $operator);
-    $prefix: get-expression-prefix($operator);
-    $value: get-expression-value($expression, $operator);
-
-    @return '(#{$prefix}-#{$dimension}: #{$value})';
-}
-
-///
-/// Slice `$list` between `$start` and `$end` indexes
-///
-/// @access private
-///
-/// @param {List} $list - List to slice
-/// @param {Number} $start [1] - Start index
-/// @param {Number} $end [length($list)] - End index
-///
-/// @return {List} Sliced list
-///
-@function slice($list, $start: 1, $end: list.length($list)) {
-    @if list.length($list) < 1 or $start>$end {
-        @return ();
-    }
-
-    $result: ();
-
-    @for $i from $start through $end {
-        $result: list.append($result, list.nth($list, $i), comma);
-    }
-
-    @return $result;
-}
-
-////
-/// String to number converter
-/// @author Kitty Giraudel
-/// @access private
-////
-
-///
-/// Casts a string into a number
-///
-/// @param {String | Number} $value - Value to be parsed
-///
-/// @return {Number}
-///
-
-@function to-number($value) {
-    @if meta.type-of($value)=='number' {
-        @return $value;
-    }
-
-    @else if meta.type-of($value) !='string' {
-        $_: im-log('Value for `to-number` should be a number or a string.');
-    }
-
-    $first-character: string.slice($value, 1, 1);
-    $result: 0;
-    $digits: 0;
-    $minus: ($first-character=='-');
-    $numbers: ('0': 0,
-        '1': 1,
-        '2': 2,
-        '3': 3,
-        '4': 4,
-        '5': 5,
-        '6': 6,
-        '7': 7,
-        '8': 8,
-        '9': 9,
-    );
-
-    // Remove +/- sign if present at first character
-    @if ($first-character=='+'or $first-character=='-') {
-        $value: string.slice($value, 2);
-    }
-
-    @for $i from 1 through string.length($value) {
-        $character: string.slice($value, $i, $i);
-
-        @if not(list.index(map.keys($numbers), $character) or $character=='.') {
-            @return to-length(if($minus, -$result, $result), string.slice($value, $i));
-        }
-
-        @if $character=='.' {
-            $digits: 1;
-        }
-
-        @else if $digits==0 {
-            $result: $result * 10 + map.get($numbers, $character);
-        }
-
-        @else {
-            $digits: $digits * 10;
-            $result: $result + math.div(map.get($numbers, $character), $digits);
-        }
-    }
-
-    @return if($minus, -$result, $result);
-}
-
-///
-/// Add `$unit` to `$value`
-///
-/// @param {Number} $value - Value to add unit to
-/// @param {String} $unit - String representation of the unit
-///
-/// @return {Number} - `$value` expressed in `$unit`
-///
-@function to-length($value, $unit) {
-    $units: ('px': 1px,
-            'cm': 1cm,
-            'mm': 1mm,
-            '%': 1%,
-            'ch': 1ch,
-            'pc': 1pc,
-            'in': 1in,
-            'em': 1em,
-            'rem': 1rem,
-            'pt': 1pt,
-            'ex': 1ex,
-            'vw': 1vw,
-            'vh': 1vh,
-            'vmin': 1vmin,
-            'vmax': 1vmax,
-        );
-
-    @if not list.index(map.keys($units), $unit) {
-        $_: im-log('Invalid unit `#{$unit}`.');
-    }
-
-    @return $value * map.get($units, $unit);
-}
-
-////
-/// String to number converter
-/// @author Jack McNicol
-/// @access private
-////
-
-///
-/// Trims a string of leading and trailing spaces
-///
-/// @param {String} $string - Value to be trimmed
-///
-/// @return {String}
-///
-
-@function str-trim($string) {
-    @if (str-slice($string, 1, 1)==' ') {
-        @return str-trim(str-slice($string, 2));
-    }
-
-    @else if (str-slice($string, str-length($string), -1)==' ') {
-        @return str-trim(str-slice($string, 1, -2));
-    }
-
-    @else {
-        @return $string;
-    }
-}
-
-///
-/// This mixin aims at redefining the configuration just for the scope of
-/// the call. It is helpful when having a component needing an extended
-/// configuration such as custom breakpoints (referred to as tweakpoints)
-/// for instance.
-///
-/// @author Kitty Giraudel
-///
-/// @param {Map} $tweakpoints [()] - Map of tweakpoints to be merged with `$breakpoints`
-/// @param {Map} $tweak-media-expressions [()] - Map of tweaked media expressions to be merged with `$media-expression`
-///
-/// @example scss - Extend the global breakpoints with a tweakpoint
-///  @include media-context(('custom': 678px)) {
-///    .foo {
-///      @include media('>phone', '<=custom') {
-///       // ...
-///      }
-///    }
-///  }
-///
-/// @example scss - Extend the global media expressions with a custom one
-///  @include media-context($tweak-media-expressions: ('all': 'all')) {
-///    .foo {
-///      @include media('all', '>phone') {
-///       // ...
-///      }
-///    }
-///  }
-///
-/// @example scss - Extend both configuration maps
-///  @include media-context(('custom': 678px), ('all': 'all')) {
-///    .foo {
-///      @include media('all', '>phone', '<=custom') {
-///       // ...
-///      }
-///    }
-///  }
-///
-@mixin media-context($tweakpoints: (), $tweak-media-expressions: ()) {
-    // Save global configuration
-    $global-breakpoints: $breakpoints;
-    $global-media-expressions: $media-expressions;
-
-    // Update global configuration
-    $breakpoints: map.merge($breakpoints, $tweakpoints) !global;
-    $media-expressions: map.merge($media-expressions, $tweak-media-expressions) !global;
-
-    @content;
-
-    // Restore global configuration
-    $breakpoints: $global-breakpoints !global;
-    $media-expressions: $global-media-expressions !global;
-}
-
-////
-/// include-media public exposed API
-/// @author Eduardo Boucas
-/// @access public
-////
-
-///
-/// Generates a media query based on a list of conditions
-///
-/// @param {Arglist}   $conditions  - Media query conditions
-///
-/// @example scss - With a single set breakpoint
-///  @include media('>phone') { }
-///
-/// @example scss - With two set breakpoints
-///  @include media('>phone', '<=tablet') { }
-///
-/// @example scss - With custom values
-///  @include media('>=358px', '<850px') { }
-///
-/// @example scss - With set breakpoints with custom values
-///  @include media('>desktop', '<=1350px') { }
-///
-/// @example scss - With a static expression
-///  @include media('retina2x') { }
-///
-/// @example scss - Mixing everything
-///  @include media('>=350px', '<tablet', 'retina3x') { }
-///
-@mixin media($conditions...) {
-    @if ($im-media-support and list.length($conditions)==0) or (not $im-media-support and im-intercepts-static-breakpoint($conditions...)) {
-        @content;
-    }
-
-    @else if ($im-media-support and list.length($conditions) > 0) {
-        @media #{string.unquote(parse-expression(list.nth($conditions, 1)))} {
-            // Recursive call
-            $sliced-conditions: slice($conditions, 2);
-
-            @include media($sliced-conditions...) {
-                @content;
+            .submit {
+                font-size: 18px;
+                font-weight: bold;
+                padding: 4px 5px;
+                color: $base_color;
+                width: 10%;
             }
         }
     }
