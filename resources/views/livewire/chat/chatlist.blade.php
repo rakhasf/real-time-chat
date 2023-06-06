@@ -1,5 +1,6 @@
 <div>
-    {{-- The Master doesn't talk, he acts. --}}
+    {{-- der krieg ist veloren.. --}}
+
     <div class="chatlist_header">
         <div class="title">
             Chat
@@ -10,23 +11,25 @@
         </div>
 
     </div>
+
+    @if (count($conversations) > 0)
+
+    @foreach ($conversations as $conversation)
     <div class="chatlist_body">
 
         <div class="chatlist_item">
             <div class="chatlist_img_container">
-                <img src="https://picsum.photos/id/227/200/300" alt="">
+                <img src="https://picsum.photos/id/227/200/300"{{ $this->getChatInstance($conversation, $name = 'id' )}}>
             </div>
 
             <div class="chatlist_info">
                 <div class="top_row">
-                    <div class="list_username">Zirjy</div>
-                    <span class="date">2d</span>
+                    <div class="list_username"{{ $this->getChatInstance($conversation, $name = 'name' )}}>Zirjy</div>
+                    <span class="date">{{ $conversation->messages->last()->created_at->shortAbsoluteDiffForHumans }}</span>
                 </div>
                 <div class="bottom_row">
                     <div class="message_body text-truncate">
-                        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptate, eaque consequatur.
-                        Aspernatur deleniti soluta laboriosam natus nulla. Facere libero impedit, cupiditate vitae fuga
-                        possimus. Quibusdam ea commodi a doloribus earum.
+                        {{ $this->getChatInstance($conversation->messages->last()->body )}}
                     </div>
 
                     <div class="unread_count">
@@ -38,4 +41,10 @@
         </div>
 
     </div>
+    @endforeach
+
+    @else 
+    You have no conversations
+    @endif
+
 </div>
