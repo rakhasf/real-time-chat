@@ -7,7 +7,7 @@
         </div>
 
         <div class="img_container">
-            <img src="https://picsum.photos/id/237/200/300" alt="">
+            <img src="https://ui-avatars.com/api/?background=0D8ABC&color=fff" alt="">
         </div>
 
     </div>
@@ -17,9 +17,9 @@
     @foreach ($conversations as $conversation)
         <div class="chatlist_body">
     
-            <div class="chatlist_item" wire:click="$emit('chatUserSelected', {{ $conversation, $name = 'id'}})">
+            <div class="chatlist_item" wire:key={{ $conversation->id }} wire:click="$emit('chatUserSelected', {{ $conversation, $name = 'id'}})">
                 <div class="chatlist_img_container">
-                    <img src="https://picsum.photos/id/{{ $this->getChatUserInstance($conversation, $name = 'id') }}/200/300" alt="">
+                    <img src="https://ui-avatars.com/api/?name{{ $this->getChatUserInstance($conversation, $name = 'name') }}" alt="">
                 </div>
     
                 <div class="chatlist_info">
